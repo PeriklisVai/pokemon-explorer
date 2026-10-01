@@ -1,0 +1,176 @@
+package com.vai.pokemonexplorer.ui.screens
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun HomeScreen() {
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(
+                start = 24.dp,
+                end = 24.dp,
+                top = 12.dp,
+                bottom = 24.dp
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "Pokemon Explorer",
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        SearchBar(modifier = Modifier.padding(top = 8.dp))
+
+        Column(
+            modifier = Modifier.padding(top = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            TypeRow("Fire", "Water")
+            TypeRow("Grass", "Electric")
+            TypeRow("Dragon", "Psychic")
+            TypeRow("Ghost", "Dark")
+            TypeRow("Steel", "Fairy")
+        }
+    }
+}
+
+@Composable
+fun TypeRow(
+    firstType: String,
+    secondType: String
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        TypeButton(
+            type = firstType,
+            modifier = Modifier.weight(1f)
+        )
+
+        TypeButton(
+            type = secondType,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun TypeButton(
+    type: String,
+    modifier: Modifier = Modifier
+) {
+
+    Button(
+        onClick = {},
+        modifier = modifier,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = getTypeColor(type)
+        ),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = type.uppercase(),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+fun getTypeColor(type: String): Color {
+
+    return when (type.lowercase()) {
+
+        "fire" -> Color(0xFFF08030)
+        "water" -> Color(0xFF6890F0)
+        "grass" -> Color(0xFF78C850)
+        "electric" -> Color(0xFFF8D030)
+        "dragon" -> Color(0xFF7038F8)
+        "psychic" -> Color(0xFFF85888)
+        "ghost" -> Color(0xFF705898)
+        "dark" -> Color(0xFF705848)
+        "steel" -> Color(0xFFB8B8D0)
+        "fairy" -> Color(0xFFEE99AC)
+
+        else -> Color.Gray
+    }
+}
+
+@Composable
+fun SearchBar(
+    modifier: Modifier = Modifier
+) {
+    var searchText by remember {
+        mutableStateOf("")
+    }
+
+    TextField(
+        value = searchText,
+        onValueChange = {
+            searchText = it
+        },
+        placeholder = {
+            Text("Search Pokemon...")
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search"
+            )
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(28.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFF3F3F5),
+            unfocusedContainerColor = Color(0xFFF3F3F5),
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
+        ),
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+
+    PokemonExplorerTheme {
+        HomeScreen()
+    }
+}
