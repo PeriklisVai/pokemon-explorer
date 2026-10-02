@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,14 +23,14 @@ import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.ui.unit.dp
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onTypeClick: (String) -> Unit
+) {
 
     Column(
         modifier = Modifier
@@ -58,11 +57,11 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            TypeRow("Fire", "Water")
-            TypeRow("Grass", "Electric")
-            TypeRow("Dragon", "Psychic")
-            TypeRow("Ghost", "Dark")
-            TypeRow("Steel", "Fairy")
+            TypeRow("Fire", "Water", onTypeClick)
+            TypeRow("Grass", "Electric", onTypeClick)
+            TypeRow("Dragon", "Psychic", onTypeClick)
+            TypeRow("Ghost", "Dark", onTypeClick)
+            TypeRow("Steel", "Fairy", onTypeClick)
         }
     }
 }
@@ -70,21 +69,26 @@ fun HomeScreen() {
 @Composable
 fun TypeRow(
     firstType: String,
-    secondType: String
+    secondType: String,
+    onTypeClick: (String) -> Unit
 ) {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         TypeButton(
             type = firstType,
+            onClick = {
+                onTypeClick(firstType)
+            },
             modifier = Modifier.weight(1f)
         )
 
         TypeButton(
             type = secondType,
+            onClick = {
+                onTypeClick(secondType)
+            },
             modifier = Modifier.weight(1f)
         )
     }
@@ -93,11 +97,11 @@ fun TypeRow(
 @Composable
 fun TypeButton(
     type: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
     Button(
-        onClick = {},
+        onClick = onClick,
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(
             containerColor = getTypeColor(type)
@@ -112,7 +116,6 @@ fun TypeButton(
         )
     }
 }
-
 fun getTypeColor(type: String): Color {
 
     return when (type.lowercase()) {
@@ -169,8 +172,9 @@ fun SearchBar(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-
     PokemonExplorerTheme {
-        HomeScreen()
+        HomeScreen(
+            onTypeClick = { }
+        )
     }
 }

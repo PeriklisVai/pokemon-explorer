@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local Android Studio settings
+appInsightsSettings.xml
+deploymentTargetSelector.xml
+runConfigurations.xml

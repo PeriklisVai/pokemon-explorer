@@ -55,4 +55,5 @@ dependencies {
     implementation(libs.retrofit.gson)
 
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.navigation:navigation-compose:2.10.2")
 }
