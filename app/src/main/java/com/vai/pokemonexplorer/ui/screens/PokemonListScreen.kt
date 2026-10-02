@@ -29,7 +29,7 @@ import coil3.compose.AsyncImage
 fun PokemonListScreen(
     type: String,
     pokemonList: List<PokemonListItem>,
-    onPokemonClick: (String) -> Unit
+    onPokemonClick: (String, String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -48,7 +48,7 @@ fun PokemonListScreen(
                 PokemonListItemRow(
                     pokemon = pokemon,
                     onClick = {
-                        onPokemonClick(pokemon.detailsUrl)
+                        onPokemonClick(pokemon.detailsUrl, type)
                     },
                     modifier = Modifier.padding(vertical = 6.dp)
                 )
@@ -89,35 +89,6 @@ fun PokemonListItemRow(
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(start = 16.dp)
-        )
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PokemonListScreenPreview() {
-    PokemonExplorerTheme {
-        PokemonListScreen(
-            type = "Fire",
-            pokemonList = listOf(
-                PokemonListItem(
-                    name = "charmander",
-                    imageUrl = null,
-                    detailsUrl = "https://pokeapi.co/api/v2/pokemon/4/"
-                ),
-                PokemonListItem(
-                    name = "charmeleon",
-                    imageUrl = null,
-                    detailsUrl = "https://pokeapi.co/api/v2/pokemon/5/"
-                ),
-                PokemonListItem(
-                    name = "charizard",
-                    imageUrl = null,
-                    detailsUrl = "https://pokeapi.co/api/v2/pokemon/6/"
-                )
-            ),
-            onPokemonClick = { }
         )
     }
 }

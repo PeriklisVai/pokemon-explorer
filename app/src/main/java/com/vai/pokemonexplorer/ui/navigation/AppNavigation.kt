@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.vai.pokemonexplorer.ui.screens.PokemonDetailsScreen
+import com.vai.pokemonexplorer.ui.viewmodel.PokemonDetailsViewModel
 import com.vai.pokemonexplorer.ui.viewmodel.PokemonListViewModel
 
 @Composable
@@ -60,23 +61,43 @@ fun AppNavigation() {
             PokemonListScreen(
                 type = type,
                 pokemonList = viewModel.pokemonList,
-                onPokemonClick = { detailsUrl ->
+                onPokemonClick = { detailsUrl, type ->
                     navController.navigate(
-                        "pokemonDetails/${Uri.encode(detailsUrl)}"
+                        "pokemonDetails/$type/${Uri.encode(detailsUrl)}"
                     )
                 }
             )
         }
 
-        composable("pokemonDetails/{detailsUrl}") { backStackEntry ->
+        composable("pokemonDetails/{type}/{detailsUrl}") { backStackEntry ->
+
+            val type = backStackEntry.arguments
+                ?.getString("type")
+                ?: ""
 
             val detailsUrl = backStackEntry.arguments
                 ?.getString("detailsUrl")
                 ?.let { Uri.decode(it) }
                 ?: ""
 
+            val viewModel: PokemonDetailsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        PokemonDetailsViewModel(repository)
+                    }
+                }
+            )
+
+            LaunchedEffect(detailsUrl) {
+                viewModel.loadPokemonDetails(detailsUrl)
+            }
+
             PokemonDetailsScreen(
-                detailsUrl = detailsUrl
+                pokemonDetails = viewModel.pokemonDetails,
+                type = type,
+                onBackClick = {
+                    navController.popBackStack()
+                }
             )
         }
     }
