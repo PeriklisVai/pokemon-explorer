@@ -7,12 +7,13 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.vai.pokemonexplorer.ui.model.PokemonListItem
 
 class PokemonListViewModel(
     private val repository: PokemonRepository
 ) : ViewModel() {
 
-    var pokemonNames by mutableStateOf<List<String>>(emptyList())
+    var pokemonList by mutableStateOf<List<PokemonListItem>>(emptyList())
         private set
 
     fun loadPokemonByType(type: String) {
@@ -22,9 +23,20 @@ class PokemonListViewModel(
                 type.lowercase()
             )
 
-            pokemonNames = response.pokemon
+            pokemonList = response.pokemon
                 .take(10)
-                .map { it.pokemon.name }
+                .map { item ->
+
+                    val details = repository.getPokemonDetails(
+                        item.pokemon.url
+                    )
+
+                    PokemonListItem(
+                        name = item.pokemon.name,
+                        imageUrl = details.sprites.front_default,
+                        detailsUrl = item.pokemon.url
+                    )
+                }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.vai.pokemonexplorer.ui.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -13,6 +14,7 @@ import com.vai.pokemonexplorer.data.repository.PokemonRepository
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.vai.pokemonexplorer.ui.screens.PokemonDetailsScreen
 import com.vai.pokemonexplorer.ui.viewmodel.PokemonListViewModel
 
 @Composable
@@ -57,7 +59,24 @@ fun AppNavigation() {
 
             PokemonListScreen(
                 type = type,
-                pokemonNames = viewModel.pokemonNames
+                pokemonList = viewModel.pokemonList,
+                onPokemonClick = { detailsUrl ->
+                    navController.navigate(
+                        "pokemonDetails/${Uri.encode(detailsUrl)}"
+                    )
+                }
+            )
+        }
+
+        composable("pokemonDetails/{detailsUrl}") { backStackEntry ->
+
+            val detailsUrl = backStackEntry.arguments
+                ?.getString("detailsUrl")
+                ?.let { Uri.decode(it) }
+                ?: ""
+
+            PokemonDetailsScreen(
+                detailsUrl = detailsUrl
             )
         }
     }
