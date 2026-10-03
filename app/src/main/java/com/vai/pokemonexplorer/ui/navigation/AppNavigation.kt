@@ -65,6 +65,11 @@ fun AppNavigation() {
                     navController.navigate(
                         "pokemonDetails/$type/${Uri.encode(detailsUrl)}"
                     )
+                },
+                hasMore = viewModel.hasMore,
+                isLoadingMore = viewModel.isLoadingMore,
+                onLoadMore = {
+                    viewModel.loadNextPokemon()
                 }
             )
         }
