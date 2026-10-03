@@ -3,6 +3,7 @@ package com.vai.pokemonexplorer.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vai.pokemonexplorer.data.repository.PokemonRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,15 +18,24 @@ class PokemonListViewModel(
     var pokemonList by mutableStateOf<List<PokemonListItem>>(emptyList())
         private set
 
+    var searchQuery by mutableStateOf("")
+        private set
+
     var isLoadingMore by mutableStateOf(false)
         private set
 
     var hasMore by mutableStateOf(true)
         private set
 
-    private var allPokemon = emptyList<TypePokemonDto>()
+    private var allPokemonResults = emptyList<TypePokemonDto>()
+
+    private var filteredPokemonResults = emptyList<TypePokemonDto>()
 
     private var loadedCount = 0
+
+    private var searchJob: Job? = null
+
+    private var loadJob: Job? = null
 
     fun loadPokemonByType(type: String) {
         viewModelScope.launch {
@@ -34,7 +44,9 @@ class PokemonListViewModel(
                 type.lowercase()
             )
 
-            allPokemon = response.pokemon
+            allPokemonResults = response.pokemon
+            filteredPokemonResults = allPokemonResults
+            searchQuery = ""
             loadedCount = 0
             pokemonList = emptyList()
             hasMore = true
@@ -43,32 +55,61 @@ class PokemonListViewModel(
         }
     }
 
+    fun onSearchQueryChange(query: String) {
+        searchQuery = query
+
+        val previousLoadJob = loadJob
+        previousLoadJob?.cancel()
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            previousLoadJob?.join()
+
+            filteredPokemonResults =
+                if (query.isBlank()) {
+                    allPokemonResults
+                } else {
+                    allPokemonResults.filter { item ->
+                        item.pokemon.name.startsWith(
+                            query,
+                            ignoreCase = true
+                        )
+                    }
+                }
+
+            loadedCount = 0
+            pokemonList = emptyList()
+            hasMore = filteredPokemonResults.isNotEmpty()
+
+            if (filteredPokemonResults.isNotEmpty()) {
+                loadNextPokemon()
+            }
+        }
+    }
+
     fun loadNextPokemon() {
         if (isLoadingMore || !hasMore) return
 
         isLoadingMore = true
 
-        viewModelScope.launch {
+        loadJob = viewModelScope.launch {
             try {
-                val nextPokemon = allPokemon
+                val nextPokemonBatch = filteredPokemonResults
                     .drop(loadedCount)
                     .take(10)
 
-                val newItems = nextPokemon.map { item ->
-                    val details = repository.getPokemonDetails(
-                        item.pokemon.url
-                    )
+                val newItems = nextPokemonBatch.map { item ->
 
                     PokemonListItem(
                         name = item.pokemon.name,
-                        imageUrl = details.sprites.front_default,
+                        imageUrl = repository.getPokemonDetails(item.pokemon.url).sprites.front_default,
                         detailsUrl = item.pokemon.url
                     )
                 }
 
                 pokemonList = pokemonList + newItems
                 loadedCount += newItems.size
-                hasMore = loadedCount < allPokemon.size
+                hasMore = loadedCount < filteredPokemonResults.size
             } finally {
                 isLoadingMore = false
             }

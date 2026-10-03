@@ -61,6 +61,8 @@ fun AppNavigation() {
             PokemonListScreen(
                 type = type,
                 pokemonList = viewModel.pokemonList,
+                searchQuery = viewModel.searchQuery,
+                onSearchQueryChange = viewModel::onSearchQueryChange,
                 onPokemonClick = { detailsUrl, type ->
                     navController.navigate(
                         "pokemonDetails/$type/${Uri.encode(detailsUrl)}"

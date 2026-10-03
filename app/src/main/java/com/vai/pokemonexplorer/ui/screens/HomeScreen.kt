@@ -20,13 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.*
-
 @Composable
 fun HomeScreen(
     onTypeClick: (String) -> Unit
@@ -49,8 +42,6 @@ fun HomeScreen(
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold
         )
-
-        SearchBar(modifier = Modifier.padding(top = 8.dp))
 
         Column(
             modifier = Modifier.padding(top = 32.dp),
@@ -133,40 +124,6 @@ fun getTypeColor(type: String): Color {
 
         else -> Color.Gray
     }
-}
-
-@Composable
-fun SearchBar(
-    modifier: Modifier = Modifier
-) {
-    var searchText by remember {
-        mutableStateOf("")
-    }
-
-    TextField(
-        value = searchText,
-        onValueChange = {
-            searchText = it
-        },
-        placeholder = {
-            Text("Search Pokemon...")
-        },
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search"
-            )
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(28.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFFF3F3F5),
-            unfocusedContainerColor = Color(0xFFF3F3F5),
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        modifier = modifier.fillMaxWidth()
-    )
 }
 
 @Preview(showBackground = true)
