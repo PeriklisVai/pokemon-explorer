@@ -52,9 +52,13 @@ fun PokemonListScreen(
         mutableFloatStateOf(0f)
     }
 
+    var overscrollDistance by remember {
+        mutableFloatStateOf(0f)
+    }
+
     val density = LocalDensity.current
     val loadThreshold = with(density) {
-        80.dp.toPx()
+        110.dp.toPx()
     }
     val loadProgress = (pullDistance / loadThreshold).coerceIn(0f, 1f)
 
@@ -76,18 +80,39 @@ fun PokemonListScreen(
                             hasMore &&
                             !isLoadingMore
                         ) {
-                            pullDistance = (
-                                pullDistance + (-deltaY)
-                            ).coerceAtMost(loadThreshold)
+                            val dragAmount = -deltaY
+                            val remainingToThreshold = loadThreshold - pullDistance
+
+                            if (remainingToThreshold > 0f) {
+                                val usedForProgress = minOf(dragAmount, remainingToThreshold)
+                                pullDistance += usedForProgress
+
+                                val extra = dragAmount - usedForProgress
+                                if (extra > 0f) {
+                                    overscrollDistance += extra
+                                }
+                            } else {
+                                overscrollDistance += dragAmount
+                            }
 
                             change.consume()
                         } else if (
                             deltaY > 0 &&
-                            pullDistance > 0f
+                            (pullDistance > 0f || overscrollDistance > 0f)
                         ) {
-                            pullDistance = (
-                                pullDistance - deltaY
-                            ).coerceAtLeast(0f)
+                            var reverseAmount = deltaY
+
+                            if (overscrollDistance > 0f) {
+                                val usedForOverscroll = minOf(reverseAmount, overscrollDistance)
+                                overscrollDistance -= usedForOverscroll
+                                reverseAmount -= usedForOverscroll
+                            }
+
+                            if (reverseAmount > 0f && pullDistance > 0f) {
+                                pullDistance = (
+                                    pullDistance - reverseAmount
+                                ).coerceAtLeast(0f)
+                            }
 
                             change.consume()
                         }
@@ -102,6 +127,7 @@ fun PokemonListScreen(
                     }
 
                     pullDistance = 0f
+                    overscrollDistance = 0f
                 }
             }
             .padding(24.dp)
