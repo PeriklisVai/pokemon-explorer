@@ -37,7 +37,13 @@ class PokemonListViewModel(
 
     private var loadJob: Job? = null
 
+    private var loadedType: String? = null
+
     fun loadPokemonByType(type: String) {
+        if (loadedType == type) return
+
+        loadedType = type
+
         viewModelScope.launch {
 
             val response = repository.getPokemonByType(
@@ -98,18 +104,33 @@ class PokemonListViewModel(
                     .drop(loadedCount)
                     .take(10)
 
-                val newItems = nextPokemonBatch.map { item ->
-
+                val newPokemonItems = nextPokemonBatch.map { item ->
                     PokemonListItem(
                         name = item.pokemon.name,
-                        imageUrl = repository.getPokemonDetails(item.pokemon.url).sprites.front_default,
+                        imageUrl = null,
                         detailsUrl = item.pokemon.url
                     )
                 }
 
-                pokemonList = pokemonList + newItems
-                loadedCount += newItems.size
+                pokemonList = pokemonList + newPokemonItems
+                loadedCount += newPokemonItems.size
                 hasMore = loadedCount < filteredPokemonResults.size
+
+                nextPokemonBatch.forEach { item ->
+                    val details = repository.getPokemonDetails(
+                        item.pokemon.url
+                    )
+
+                    pokemonList = pokemonList.map { pokemon ->
+                        if (pokemon.detailsUrl == item.pokemon.url) {
+                            pokemon.copy(
+                                imageUrl = details.sprites.front_default
+                            )
+                        } else {
+                            pokemon
+                        }
+                    }
+                }
             } finally {
                 isLoadingMore = false
             }
