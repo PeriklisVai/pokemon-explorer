@@ -4,12 +4,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,13 +28,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -49,6 +55,7 @@ fun PokemonListScreen(
     type: String,
     pokemonList: List<PokemonListItem>,
     searchQuery: String,
+    totalResultsCount: Int,
     onSearchQueryChange: (String) -> Unit,
     onPokemonClick: (String, String) -> Unit,
     hasMore: Boolean,
@@ -67,19 +74,52 @@ fun PokemonListScreen(
         mutableFloatStateOf(0f)
     }
 
+    var pendingReleaseOffset by remember {
+        mutableFloatStateOf(0f)
+    }
+
     val density = LocalDensity.current
 
     val loadThreshold = with(density) {
-        110.dp.toPx()
+        190.dp.toPx()
     }
 
-    val loadProgress =
-        (pullDistance / loadThreshold).coerceIn(0f, 1f)
+    val indicatorStartDistance = with(density) {
+        24.dp.toPx()
+    }
+
+    // Total distance the user has pulled beyond the bottom of the list.
+    val totalPullDistance = pullDistance + overscrollDistance
+
+    val maxListPullDistance = with(density) {
+        130.dp.toPx()
+    }
+    val listPullOffset = minOf(totalPullDistance, maxListPullDistance)
+
+    val indicatorProgress = (
+        (pullDistance - indicatorStartDistance) /
+            (loadThreshold - indicatorStartDistance)
+    ).coerceIn(0f, 1f)
+
+    val indicatorTravelDistance = with(density) {
+        12.dp.toPx()
+    }
+
+    LaunchedEffect(pokemonList.size) {
+        if (pendingReleaseOffset > 0f) {
+            listState.scrollBy(pendingReleaseOffset)
+
+            pullDistance = 0f
+            overscrollDistance = 0f
+            pendingReleaseOffset = 0f
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
 
             // Observe the user's vertical drag directly so the load-more indicator
             // reacts immediately in both directions.
@@ -205,48 +245,85 @@ fun PokemonListScreen(
                         hasMore &&
                         !isLoadingMore
                     ) {
+                        pendingReleaseOffset = minOf(
+                            pullDistance + overscrollDistance,
+                            maxListPullDistance
+                        )
                         onLoadMore()
+                    } else {
+                        pullDistance = 0f
+                        overscrollDistance = 0f
                     }
-
-                    // Reset the gesture state after every release,
-                    // regardless of whether loading was triggered.
-                    pullDistance = 0f
-                    overscrollDistance = 0f
                 }
             }
             .padding(24.dp)
     ) {
 
-        Text(
-            text = "$type Pokémon",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "$type Pokémon",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        TextField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            placeholder = {
-                Text("Search Pokémon")
-            },
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search"
+            TextField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                placeholder = {
+                    Text("Search Pokémon")
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(28.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFFF5F5F5),
+                    unfocusedContainerColor = Color(0xFFF5F5F5),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            )
+
+            if (pokemonList.isNotEmpty()) {
+                Text(
+                    text = "Showing ${pokemonList.size} of $totalResultsCount",
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(28.dp),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color(0xFFF5F5F5),
-                unfocusedContainerColor = Color(0xFFF5F5F5),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-        )
+            }
+        }
+
+        if (
+            pokemonList.isEmpty() &&
+            isLoadingMore
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp)
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                Text("Loading...")
+            }
+        }
 
         if (
             searchQuery.isNotBlank() &&
@@ -262,36 +339,57 @@ fun PokemonListScreen(
             )
         }
 
-        LazyColumn(
-            state = listState,
+        Box(
             modifier = Modifier
-                .padding(top = 16.dp)
+                .fillMaxWidth()
                 .weight(1f)
+                .clipToBounds()
         ) {
-
-            items(pokemonList) { pokemon ->
-
-                PokemonListItemRow(
-                    pokemon = pokemon,
-                    onClick = {
-                        onPokemonClick(
-                            pokemon.detailsUrl,
-                            type
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 8.dp)
+                    .graphicsLayer {
+                        translationY = -listPullOffset
+                    }
+            ) {
+                items(pokemonList) { pokemon ->
+                    PokemonListItemRow(
+                        pokemon = pokemon,
+                        onClick = {
+                            onPokemonClick(
+                                pokemon.detailsUrl,
+                                type
+                            )
+                        },
+                        modifier = Modifier.padding(
+                            vertical = 6.dp
                         )
-                    },
-                    modifier = Modifier.padding(
-                        vertical = 6.dp
-                    )
-                )
-            }
-
-            if (hasMore) {
-                item {
-                    LoadMoreIndicator(
-                        progress = loadProgress,
-                        isLoading = isLoadingMore
                     )
                 }
+            }
+
+            if (
+                hasMore &&
+                pokemonList.isNotEmpty() &&
+                indicatorProgress > 0f
+            ) {
+                LoadMoreIndicator(
+                    progress = indicatorProgress,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .graphicsLayer {
+                            val scale = 0.75f + (0.25f * indicatorProgress)
+                            scaleX = scale
+                            scaleY = scale
+
+                            translationY =
+                                indicatorTravelDistance * (1f - indicatorProgress)
+
+                            alpha = indicatorProgress
+                        }
+                )
             }
         }
     }
@@ -301,22 +399,15 @@ fun PokemonListScreen(
 @Composable
 private fun LoadMoreIndicator(
     progress: Float,
-    isLoading: Boolean
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = 8.dp,
-                bottom = 16.dp
-            ),
+        modifier = modifier.padding(bottom = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         CircularProgressIndicator(
-            progress = {
-                if (isLoading) 1f else progress
-            },
+            progress = { progress },
             modifier = Modifier.size(32.dp)
         )
 
@@ -325,10 +416,10 @@ private fun LoadMoreIndicator(
         )
 
         Text(
-            text = when {
-                isLoading -> "Loading..."
-                progress >= 1f -> "Release to load"
-                else -> "Load more"
+            text = if (progress >= 1f) {
+                "Release to load"
+            } else {
+                "Load more"
             }
         )
     }

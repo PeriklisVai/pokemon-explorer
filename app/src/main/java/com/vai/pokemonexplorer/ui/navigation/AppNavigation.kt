@@ -1,6 +1,9 @@
 package com.vai.pokemonexplorer.ui.navigation
 
 import android.net.Uri
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -29,7 +32,43 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "home",
+
+        // Fade in the destination screen during normal navigation.
+        enterTransition = {
+            fadeIn(
+                animationSpec = tween(200)
+            )
+        },
+
+        // Fade out the current screen during normal navigation.
+        exitTransition = {
+            fadeOut(
+                animationSpec = tween(200)
+            )
+        },
+
+        // Fade the previous screen back in when navigating back.
+        popEnterTransition = {
+            fadeIn(
+                animationSpec = tween(200)
+            )
+        },
+
+        // Fade out the current screen when it is removed from the back stack.
+        popExitTransition = {
+            fadeOut(
+                animationSpec = tween(200)
+            )
+        },
+
+        // Handle Android predictive-back gesture without the default scale effect.
+        predictivePopEnterTransition = {
+            fadeIn()
+        },
+        predictivePopExitTransition = {
+            fadeOut()
+        }
     ) {
 
         composable("home") {
@@ -62,6 +101,7 @@ fun AppNavigation() {
                 type = type,
                 pokemonList = viewModel.pokemonList,
                 searchQuery = viewModel.searchQuery,
+                totalResultsCount = viewModel.totalResultsCount,
                 onSearchQueryChange = viewModel::onSearchQueryChange,
                 onPokemonClick = { detailsUrl, type ->
                     navController.navigate(

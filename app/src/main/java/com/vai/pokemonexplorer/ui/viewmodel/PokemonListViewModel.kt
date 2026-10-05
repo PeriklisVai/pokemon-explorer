@@ -31,6 +31,9 @@ class PokemonListViewModel(
 
     private var filteredPokemonResults = emptyList<TypePokemonDto>()
 
+    val totalResultsCount: Int
+        get() = filteredPokemonResults.size
+
     private var loadedCount = 0
 
     private var searchJob: Job? = null
@@ -43,19 +46,23 @@ class PokemonListViewModel(
         if (loadedType == type) return
 
         loadedType = type
+        isLoadingMore = true
 
         viewModelScope.launch {
+            try {
+                val response = repository.getPokemonByType(
+                    type.lowercase()
+                )
 
-            val response = repository.getPokemonByType(
-                type.lowercase()
-            )
-
-            allPokemonResults = response.pokemon
-            filteredPokemonResults = allPokemonResults
-            searchQuery = ""
-            loadedCount = 0
-            pokemonList = emptyList()
-            hasMore = true
+                allPokemonResults = response.pokemon
+                filteredPokemonResults = allPokemonResults
+                searchQuery = ""
+                loadedCount = 0
+                pokemonList = emptyList()
+                hasMore = true
+            } finally {
+                isLoadingMore = false
+            }
 
             loadNextPokemon()
         }
@@ -99,11 +106,11 @@ class PokemonListViewModel(
         isLoadingMore = true
 
         loadJob = viewModelScope.launch {
-            try {
-                val nextPokemonBatch = filteredPokemonResults
-                    .drop(loadedCount)
-                    .take(10)
+            val nextPokemonBatch = filteredPokemonResults
+                .drop(loadedCount)
+                .take(10)
 
+            try {
                 val newPokemonItems = nextPokemonBatch.map { item ->
                     PokemonListItem(
                         name = item.pokemon.name,
@@ -115,24 +122,24 @@ class PokemonListViewModel(
                 pokemonList = pokemonList + newPokemonItems
                 loadedCount += newPokemonItems.size
                 hasMore = loadedCount < filteredPokemonResults.size
-
-                nextPokemonBatch.forEach { item ->
-                    val details = repository.getPokemonDetails(
-                        item.pokemon.url
-                    )
-
-                    pokemonList = pokemonList.map { pokemon ->
-                        if (pokemon.detailsUrl == item.pokemon.url) {
-                            pokemon.copy(
-                                imageUrl = details.sprites.front_default
-                            )
-                        } else {
-                            pokemon
-                        }
-                    }
-                }
             } finally {
                 isLoadingMore = false
+            }
+
+            nextPokemonBatch.forEach { item ->
+                val details = repository.getPokemonDetails(
+                    item.pokemon.url
+                )
+
+                pokemonList = pokemonList.map { pokemon ->
+                    if (pokemon.detailsUrl == item.pokemon.url) {
+                        pokemon.copy(
+                            imageUrl = details.sprites.front_default
+                        )
+                    } else {
+                        pokemon
+                    }
+                }
             }
         }
     }
