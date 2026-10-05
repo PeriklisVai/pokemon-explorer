@@ -47,6 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.vai.pokemonexplorer.ui.components.ErrorContent
+import com.vai.pokemonexplorer.ui.model.ErrorUiState
 import com.vai.pokemonexplorer.ui.model.PokemonListItem
 
 
@@ -56,6 +58,8 @@ fun PokemonListScreen(
     pokemonList: List<PokemonListItem>,
     searchQuery: String,
     totalResultsCount: Int,
+    errorState: ErrorUiState?,
+    onRetry: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onPokemonClick: (String, String) -> Unit,
     hasMore: Boolean,
@@ -123,7 +127,7 @@ fun PokemonListScreen(
 
             // Observe the user's vertical drag directly so the load-more indicator
             // reacts immediately in both directions.
-            .pointerInput(hasMore, isLoadingMore) {
+            .pointerInput(hasMore, isLoadingMore, errorState) {
 
                 // Handle one complete touch gesture at a time:
                 // finger down -> drag -> finger release.
@@ -159,7 +163,8 @@ fun PokemonListScreen(
                             deltaY < 0 &&
                             !listState.canScrollForward &&
                             hasMore &&
-                            !isLoadingMore
+                            !isLoadingMore &&
+                            errorState == null
                         ) {
                             val dragAmount = -deltaY
 
@@ -243,7 +248,8 @@ fun PokemonListScreen(
                     if (
                         pullDistance >= loadThreshold &&
                         hasMore &&
-                        !isLoadingMore
+                        !isLoadingMore &&
+                        errorState == null
                     ) {
                         pendingReleaseOffset = minOf(
                             pullDistance + overscrollDistance,
@@ -305,7 +311,8 @@ fun PokemonListScreen(
 
         if (
             pokemonList.isEmpty() &&
-            isLoadingMore
+            isLoadingMore &&
+            errorState == null
         ) {
             Column(
                 modifier = Modifier
@@ -328,7 +335,8 @@ fun PokemonListScreen(
         if (
             searchQuery.isNotBlank() &&
             pokemonList.isEmpty() &&
-            !isLoadingMore
+            !isLoadingMore &&
+            errorState == null
         ) {
             Text(
                 text = "No Pokémon found",
@@ -345,51 +353,60 @@ fun PokemonListScreen(
                 .weight(1f)
                 .clipToBounds()
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 8.dp)
-                    .graphicsLayer {
-                        translationY = -listPullOffset
-                    }
-            ) {
-                items(pokemonList) { pokemon ->
-                    PokemonListItemRow(
-                        pokemon = pokemon,
-                        onClick = {
-                            onPokemonClick(
-                                pokemon.detailsUrl,
-                                type
+            if (errorState != null) {
+                ErrorContent(
+                    title = errorState.title,
+                    message = errorState.message,
+                    onRetry = onRetry,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 8.dp)
+                        .graphicsLayer {
+                            translationY = -listPullOffset
+                        }
+                ) {
+                    items(pokemonList) { pokemon ->
+                        PokemonListItemRow(
+                            pokemon = pokemon,
+                            onClick = {
+                                onPokemonClick(
+                                    pokemon.detailsUrl,
+                                    type
+                                )
+                            },
+                            modifier = Modifier.padding(
+                                vertical = 6.dp
                             )
-                        },
-                        modifier = Modifier.padding(
-                            vertical = 6.dp
                         )
+                    }
+                }
+
+                if (
+                    hasMore &&
+                    pokemonList.isNotEmpty() &&
+                    indicatorProgress > 0f
+                ) {
+                    LoadMoreIndicator(
+                        progress = indicatorProgress,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .graphicsLayer {
+                                val scale = 0.75f + (0.25f * indicatorProgress)
+                                scaleX = scale
+                                scaleY = scale
+
+                                translationY =
+                                    indicatorTravelDistance * (1f - indicatorProgress)
+
+                                alpha = indicatorProgress
+                            }
                     )
                 }
-            }
-
-            if (
-                hasMore &&
-                pokemonList.isNotEmpty() &&
-                indicatorProgress > 0f
-            ) {
-                LoadMoreIndicator(
-                    progress = indicatorProgress,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .graphicsLayer {
-                            val scale = 0.75f + (0.25f * indicatorProgress)
-                            scaleX = scale
-                            scaleY = scale
-
-                            translationY =
-                                indicatorTravelDistance * (1f - indicatorProgress)
-
-                            alpha = indicatorProgress
-                        }
-                )
             }
         }
     }

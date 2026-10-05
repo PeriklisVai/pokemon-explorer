@@ -5,8 +5,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,6 +23,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.vai.pokemonexplorer.ui.screens.PokemonDetailsScreen
 import com.vai.pokemonexplorer.ui.viewmodel.PokemonDetailsViewModel
 import com.vai.pokemonexplorer.ui.viewmodel.PokemonListViewModel
+import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
 
 @Composable
 fun AppNavigation() {
@@ -93,6 +97,25 @@ fun AppNavigation() {
                 }
             )
 
+            val isInternetAvailable = rememberIsInternetAvailable()
+
+            DisposableEffect(backStackEntry, isInternetAvailable, viewModel) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (
+                        event == Lifecycle.Event.ON_RESUME &&
+                        isInternetAvailable
+                    ) {
+                        viewModel.retryMissingImages()
+                    }
+                }
+
+                backStackEntry.lifecycle.addObserver(observer)
+
+                onDispose {
+                    backStackEntry.lifecycle.removeObserver(observer)
+                }
+            }
+
             LaunchedEffect(type) {
                 viewModel.loadPokemonByType(type)
             }
@@ -102,6 +125,10 @@ fun AppNavigation() {
                 pokemonList = viewModel.pokemonList,
                 searchQuery = viewModel.searchQuery,
                 totalResultsCount = viewModel.totalResultsCount,
+                errorState = viewModel.errorState,
+                onRetry = {
+                    viewModel.retryLoadPokemon(type)
+                },
                 onSearchQueryChange = viewModel::onSearchQueryChange,
                 onPokemonClick = { detailsUrl, type ->
                     navController.navigate(
@@ -142,6 +169,10 @@ fun AppNavigation() {
             PokemonDetailsScreen(
                 pokemonDetails = viewModel.pokemonDetails,
                 type = type,
+                errorState = viewModel.errorState,
+                onRetry = {
+                    viewModel.loadPokemonDetails(detailsUrl)
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }
