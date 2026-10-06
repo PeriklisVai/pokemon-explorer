@@ -90,6 +90,13 @@ class PokemonListViewModel(
                     title = "Unable to load Pokémon",
                     message = "Something went wrong while contacting PokéAPI. Please try again."
                 )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                errorState = ErrorUiState(
+                    title = "Something went wrong",
+                    message = "An unexpected error occurred. Please try again."
+                )
             } finally {
                 isLoadingMore = false
             }

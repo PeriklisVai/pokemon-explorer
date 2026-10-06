@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.vai.pokemonexplorer.data.remote.dto.PokemonDetailsDto
 import com.vai.pokemonexplorer.data.repository.PokemonRepository
 import com.vai.pokemonexplorer.ui.model.ErrorUiState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -43,6 +44,13 @@ class PokemonDetailsViewModel(
                 errorState = ErrorUiState(
                     title = "Unable to load Pokémon",
                     message = "Something went wrong while contacting PokéAPI. Please try again."
+                )
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                errorState = ErrorUiState(
+                    title = "Something went wrong",
+                    message = "An unexpected error occurred. Please try again."
                 )
             }
         }
