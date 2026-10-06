@@ -46,10 +46,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.vai.pokemonexplorer.ui.components.ErrorContent
+import com.vai.pokemonexplorer.ui.components.PokemonImage
 import com.vai.pokemonexplorer.ui.model.ErrorUiState
 import com.vai.pokemonexplorer.ui.model.PokemonListItem
+import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
 
 
 @Composable
@@ -66,6 +67,7 @@ fun PokemonListScreen(
     isLoadingMore: Boolean,
     onLoadMore: () -> Unit
 ) {
+    val isInternetAvailable = rememberIsInternetAvailable()
     val listState = rememberLazyListState()
 
     // Progress used to fill the load-more indicator up to its trigger threshold.
@@ -373,6 +375,7 @@ fun PokemonListScreen(
                     items(pokemonList) { pokemon ->
                         PokemonListItemRow(
                             pokemon = pokemon,
+                            isInternetAvailable = isInternetAvailable,
                             onClick = {
                                 onPokemonClick(
                                     pokemon.detailsUrl,
@@ -446,6 +449,7 @@ private fun LoadMoreIndicator(
 @Composable
 fun PokemonListItemRow(
     pokemon: PokemonListItem,
+    isInternetAvailable: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -464,9 +468,10 @@ fun PokemonListItemRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        AsyncImage(
-            model = pokemon.imageUrl,
+        PokemonImage(
+            imageUrl = pokemon.imageUrl,
             contentDescription = pokemon.name,
+            isInternetAvailable = isInternetAvailable,
             modifier = Modifier.size(72.dp)
         )
 

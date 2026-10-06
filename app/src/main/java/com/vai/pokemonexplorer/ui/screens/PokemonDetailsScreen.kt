@@ -30,14 +30,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.vai.pokemonexplorer.data.remote.dto.PokemonDetailsDto
 import com.vai.pokemonexplorer.data.remote.dto.SpritesDto
 import com.vai.pokemonexplorer.data.remote.dto.StatDto
 import com.vai.pokemonexplorer.data.remote.dto.StatNameDto
 import com.vai.pokemonexplorer.ui.components.ErrorContent
+import com.vai.pokemonexplorer.ui.components.PokemonImage
 import com.vai.pokemonexplorer.ui.model.ErrorUiState
 import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
+import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
 
 @Composable
 fun PokemonDetailsScreen(
@@ -47,6 +48,8 @@ fun PokemonDetailsScreen(
     onRetry: () -> Unit,
     onBackClick: () -> Unit
 ) {
+    val isInternetAvailable = rememberIsInternetAvailable()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,9 +134,10 @@ fun PokemonDetailsScreen(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    AsyncImage(
-                        model = pokemonDetails.sprites.front_default,
+                    PokemonImage(
+                        imageUrl = pokemonDetails.sprites.front_default,
                         contentDescription = pokemonDetails.name,
+                        isInternetAvailable = isInternetAvailable,
                         modifier = Modifier.size(190.dp)
                     )
                 }
