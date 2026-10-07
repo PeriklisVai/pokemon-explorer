@@ -1,6 +1,9 @@
 package com.vai.pokemonexplorer.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,10 +16,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.WifiOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
+import com.vai.pokemonexplorer.ui.theme.getTypeColor
 import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
 
 @Composable
@@ -117,46 +120,50 @@ fun TypeRow(
 }
 
 @Composable
-fun TypeButton(
+private fun TypeButton(
     type: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
+    Surface(
         onClick = onClick,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = getTypeColor(type)
-        ),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Text(
-            text = type.uppercase(),
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        border = BorderStroke(
+            1.dp,
+            Color.LightGray.copy(alpha = 0.4f)
         )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp)
+        ) {
+            Text(
+                text = type.uppercase(),
+                modifier = Modifier.align(Alignment.Center),
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp)
+                    .fillMaxWidth(0.82f)
+                    .height(4.dp)
+                    .background(
+                        color = getTypeColor(type),
+                        shape = RoundedCornerShape(50)
+                    )
+            )
+        }
     }
 }
-fun getTypeColor(type: String): Color {
-
-    return when (type.lowercase()) {
-
-        "fire" -> Color(0xFFF08030)
-        "water" -> Color(0xFF6890F0)
-        "grass" -> Color(0xFF78C850)
-        "electric" -> Color(0xFFF8D030)
-        "dragon" -> Color(0xFF7038F8)
-        "psychic" -> Color(0xFFF85888)
-        "ghost" -> Color(0xFF705898)
-        "dark" -> Color(0xFF705848)
-        "steel" -> Color(0xFFB8B8D0)
-        "fairy" -> Color(0xFFEE99AC)
-
-        else -> Color.Gray
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {

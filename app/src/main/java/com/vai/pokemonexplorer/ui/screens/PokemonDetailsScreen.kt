@@ -12,14 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,19 +28,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vai.pokemonexplorer.data.remote.dto.PokemonDetailsDto
+import com.vai.pokemonexplorer.data.remote.dto.PokemonTypeDto
+import com.vai.pokemonexplorer.data.remote.dto.PokemonTypeSlotDto
 import com.vai.pokemonexplorer.data.remote.dto.SpritesDto
 import com.vai.pokemonexplorer.data.remote.dto.StatDto
 import com.vai.pokemonexplorer.data.remote.dto.StatNameDto
 import com.vai.pokemonexplorer.ui.components.ErrorContent
 import com.vai.pokemonexplorer.ui.components.PokemonImage
+import com.vai.pokemonexplorer.ui.components.ScreenTopBar
 import com.vai.pokemonexplorer.ui.model.ErrorUiState
 import com.vai.pokemonexplorer.ui.theme.PokemonExplorerTheme
+import com.vai.pokemonexplorer.ui.theme.getTypeColor
 import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
 
 @Composable
 fun PokemonDetailsScreen(
     pokemonDetails: PokemonDetailsDto?,
-    type: String,
     errorState: ErrorUiState?,
     onRetry: () -> Unit,
     onBackClick: () -> Unit
@@ -53,32 +53,19 @@ fun PokemonDetailsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         // Top bar
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            IconButton(
-                onClick = onBackClick
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-
-            Text(
-                text = pokemonDetails?.name?.replaceFirstChar { it.uppercase() }
-                    ?: "Pokémon Details",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        ScreenTopBar(
+            title = pokemonDetails
+                ?.name
+                ?.replaceFirstChar { it.uppercase() }
+                ?: "Pokémon Details",
+            onBackClick = onBackClick
+        )
 
         when {
             errorState != null -> {
@@ -113,6 +100,16 @@ fun PokemonDetailsScreen(
                 val defense = pokemonDetails.stats
                     .find { it.stat.name == "defense" }
                     ?.base_stat
+
+                val firstType = pokemonDetails.types
+                    .firstOrNull { it.slot == 1 }
+                    ?.type
+                    ?.name
+
+                val secondType = pokemonDetails.types
+                    .firstOrNull { it.slot == 2 }
+                    ?.type
+                    ?.name
 
                 Spacer(
                     modifier = Modifier.height(32.dp)
@@ -153,21 +150,17 @@ fun PokemonDetailsScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                Surface(
-                    color = getTypeColor(type),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.padding(top = 6.dp)
+                Row(
+                    modifier = Modifier.padding(top = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = type.uppercase(),
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(
-                            horizontal = 16.dp,
-                            vertical = 4.dp
-                        )
-                    )
+                    firstType?.let { type ->
+                        PokemonTypeBadge(type = type)
+                    }
+
+                    secondType?.let { type ->
+                        PokemonTypeBadge(type = type)
+                    }
                 }
 
                 //type-badge
@@ -200,6 +193,27 @@ fun PokemonDetailsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PokemonTypeBadge(
+    type: String
+) {
+    Surface(
+        color = getTypeColor(type),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(
+            text = type.uppercase(),
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(
+                horizontal = 16.dp,
+                vertical = 4.dp
+            )
+        )
     }
 }
 
@@ -273,9 +287,14 @@ fun PokemonDetailsScreenPreview() {
                             name = "defense"
                         )
                     )
+                ),
+                types = listOf(
+                    PokemonTypeSlotDto(
+                        slot = 1,
+                        type = PokemonTypeDto(name = "water")
+                    )
                 )
             ),
-            type = "Water",
             errorState = null,
             onRetry = { },
             onBackClick = { }

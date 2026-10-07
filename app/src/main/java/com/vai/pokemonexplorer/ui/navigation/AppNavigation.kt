@@ -139,6 +139,9 @@ fun AppNavigation() {
                 isLoadingMore = viewModel.isLoadingMore,
                 onLoadMore = {
                     viewModel.loadNextPokemon()
+                },
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -168,7 +171,6 @@ fun AppNavigation() {
 
             PokemonDetailsScreen(
                 pokemonDetails = viewModel.pokemonDetails,
-                type = type,
                 errorState = viewModel.errorState,
                 onRetry = {
                     viewModel.loadPokemonDetails(detailsUrl)

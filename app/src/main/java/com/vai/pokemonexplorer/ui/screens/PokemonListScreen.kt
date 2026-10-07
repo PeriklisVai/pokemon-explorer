@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vai.pokemonexplorer.ui.components.ErrorContent
 import com.vai.pokemonexplorer.ui.components.PokemonImage
+import com.vai.pokemonexplorer.ui.components.ScreenTopBar
 import com.vai.pokemonexplorer.ui.model.ErrorUiState
 import com.vai.pokemonexplorer.ui.model.PokemonListItem
 import com.vai.pokemonexplorer.util.rememberIsInternetAvailable
@@ -65,7 +66,8 @@ fun PokemonListScreen(
     onPokemonClick: (String, String) -> Unit,
     hasMore: Boolean,
     isLoadingMore: Boolean,
-    onLoadMore: () -> Unit
+    onLoadMore: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     val isInternetAvailable = rememberIsInternetAvailable()
     val listState = rememberLazyListState()
@@ -264,16 +266,15 @@ fun PokemonListScreen(
                     }
                 }
             }
-            .padding(24.dp)
+            .padding(horizontal = 24.dp)
     ) {
 
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "$type Pokémon",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+            ScreenTopBar(
+                title = "$type Pokémon",
+                onBackClick = onBackClick
             )
 
             TextField(
@@ -476,7 +477,7 @@ fun PokemonListItemRow(
         )
 
         Text(
-            text = pokemon.name,
+            text = pokemon.name.replaceFirstChar { it.uppercase() },
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(
