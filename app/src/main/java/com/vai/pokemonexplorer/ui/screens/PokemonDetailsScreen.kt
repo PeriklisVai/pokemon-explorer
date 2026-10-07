@@ -1,5 +1,6 @@
 package com.vai.pokemonexplorer.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -23,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,11 +53,14 @@ fun PokemonDetailsScreen(
     onBackClick: () -> Unit
 ) {
     val isInternetAvailable = rememberIsInternetAvailable()
+    val isLandscape =
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -101,98 +108,182 @@ fun PokemonDetailsScreen(
                     .find { it.stat.name == "defense" }
                     ?.base_stat
 
-                val firstType = pokemonDetails.types
-                    .firstOrNull { it.slot == 1 }
-                    ?.type
-                    ?.name
-
-                val secondType = pokemonDetails.types
-                    .firstOrNull { it.slot == 2 }
-                    ?.type
-                    ?.name
-
-                Spacer(
-                    modifier = Modifier.height(32.dp)
-                )
-
-                // Pokemon sprite
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp)
-                        .background(
-                            color = Color(0xFFFDFDFD),
-                            shape = RoundedCornerShape(16.dp)
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .offset(y = (-16).dp),
+                        horizontalArrangement = Arrangement.spacedBy(32.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        PokemonImageCard(
+                            pokemonDetails = pokemonDetails,
+                            isInternetAvailable = isInternetAvailable,
+                            modifier = Modifier.weight(1f)
                         )
-                        .border(
-                            width = 2.dp,
-                            color = Color(0xFFBDBDBD),
-                            shape = RoundedCornerShape(16.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    PokemonImage(
-                        imageUrl = pokemonDetails.sprites.front_default,
-                        contentDescription = pokemonDetails.name,
-                        isInternetAvailable = isInternetAvailable,
-                        modifier = Modifier.size(190.dp)
-                    )
-                }
 
-                Spacer(
-                    modifier = Modifier.height(24.dp)
-                )
+                        // Right side: name, types and stats
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(240.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(
+                                modifier = Modifier.height(6.dp)
+                            )
 
-                // Pokemon Name
-                Text(
-                    text = pokemonDetails.name.uppercase(),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                            PokemonIdentity(
+                                pokemonDetails = pokemonDetails
+                            )
 
-                Row(
-                    modifier = Modifier.padding(top = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    firstType?.let { type ->
-                        PokemonTypeBadge(type = type)
+                            Spacer(
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            PokemonStats(
+                                hp = hp,
+                                attack = attack,
+                                defense = defense
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(18.dp)
+                            )
+                        }
                     }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .offset(y = (-12).dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(
+                            modifier = Modifier.height(32.dp)
+                        )
 
-                    secondType?.let { type ->
-                        PokemonTypeBadge(type = type)
+                        PokemonImageCard(
+                            pokemonDetails = pokemonDetails,
+                            isInternetAvailable = isInternetAvailable
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(24.dp)
+                        )
+
+                        PokemonIdentity(
+                            pokemonDetails = pokemonDetails
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(20.dp)
+                        )
+
+                        PokemonStats(
+                            hp = hp,
+                            attack = attack,
+                            defense = defense
+                        )
                     }
-                }
-
-                //type-badge
-                Spacer(
-                    modifier = Modifier.height(20.dp)
-                )
-
-                // Stats
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        title = "HP",
-                        value = hp,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    StatCard(
-                        title = "ATK",
-                        value = attack,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    StatCard(
-                        title = "DEF",
-                        value = defense,
-                        modifier = Modifier.weight(1f)
-                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PokemonImageCard(
+    pokemonDetails: PokemonDetailsDto,
+    isInternetAvailable: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(240.dp)
+            .background(
+                color = Color(0xFFFDFDFD),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .border(
+                width = 2.dp,
+                color = Color(0xFFBDBDBD),
+                shape = RoundedCornerShape(16.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        PokemonImage(
+            imageUrl = pokemonDetails.sprites.front_default,
+            contentDescription = pokemonDetails.name,
+            isInternetAvailable = isInternetAvailable,
+            modifier = Modifier.size(190.dp)
+        )
+    }
+}
+
+@Composable
+private fun PokemonIdentity(
+    pokemonDetails: PokemonDetailsDto
+) {
+    val firstType = pokemonDetails.types
+        .firstOrNull { it.slot == 1 }
+        ?.type
+        ?.name
+
+    val secondType = pokemonDetails.types
+        .firstOrNull { it.slot == 2 }
+        ?.type
+        ?.name
+
+    Text(
+        text = pokemonDetails.name.uppercase(),
+        fontSize = 28.sp,
+        fontWeight = FontWeight.Bold
+    )
+
+    Row(
+        modifier = Modifier.padding(top = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        firstType?.let { type ->
+            PokemonTypeBadge(type = type)
+        }
+
+        secondType?.let { type ->
+            PokemonTypeBadge(type = type)
+        }
+    }
+}
+
+@Composable
+private fun PokemonStats(
+    hp: Int?,
+    attack: Int?,
+    defense: Int?
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        StatCard(
+            title = "HP",
+            value = hp,
+            modifier = Modifier.weight(1f)
+        )
+
+        StatCard(
+            title = "ATK",
+            value = attack,
+            modifier = Modifier.weight(1f)
+        )
+
+        StatCard(
+            title = "DEF",
+            value = defense,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
