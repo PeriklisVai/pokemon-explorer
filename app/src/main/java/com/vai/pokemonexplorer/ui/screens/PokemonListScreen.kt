@@ -82,12 +82,14 @@ fun PokemonListScreen(
         mutableFloatStateOf(0f)
     }
 
+    // Pull offset that still needs to be applied to the list after release.
     var pendingReleaseOffset by remember {
         mutableFloatStateOf(0f)
     }
 
     val density = LocalDensity.current
 
+    // Pull distances used by the load-more gesture.
     val loadThreshold = with(density) {
         190.dp.toPx()
     }
@@ -104,6 +106,7 @@ fun PokemonListScreen(
     }
     val listPullOffset = minOf(totalPullDistance, maxListPullDistance)
 
+    // Converts the pull distance into indicator progress from 0% to 100%.
     val indicatorProgress = (
         (pullDistance - indicatorStartDistance) /
             (loadThreshold - indicatorStartDistance)
@@ -416,7 +419,6 @@ fun PokemonListScreen(
     }
 }
 
-
 @Composable
 private fun LoadMoreIndicator(
     progress: Float,
@@ -445,7 +447,6 @@ private fun LoadMoreIndicator(
         )
     }
 }
-
 
 @Composable
 fun PokemonListItemRow(

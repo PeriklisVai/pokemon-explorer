@@ -53,14 +53,39 @@ fun HomeScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Text(
             text = "Pokémon Explorer",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold
         )
 
-        if (isLandscape) {
+        if (!isLandscape) {
+            Column(
+                modifier = Modifier.padding(top = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf(
+                    listOf("Fire", "Water"),
+                    listOf("Grass", "Electric"),
+                    listOf("Dragon", "Psychic"),
+                    listOf("Ghost", "Dark"),
+                    listOf("Steel", "Fairy")
+                ).forEach { types ->
+                    TypeRow(
+                        types = types,
+                        onTypeClick = onTypeClick
+                    )
+                }
+            }
+
+            if (!isInternetAvailable) {
+                OfflineStatus(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 64.dp)
+                )
+            }
+        } else {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -68,81 +93,25 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // First column
+                TypeColumn(
+                    types = listOf("Fire", "Water", "Grass", "Electric"),
+                    onTypeClick = onTypeClick,
+                    modifier = Modifier.weight(1f)
+                )
+
+                TypeColumn(
+                    types = listOf("Dragon", "Psychic", "Ghost", "Dark"),
+                    onTypeClick = onTypeClick,
+                    modifier = Modifier.weight(1f)
+                )
+
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TypeButton(
-                        type = "Fire",
-                        onClick = { onTypeClick("Fire") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Water",
-                        onClick = { onTypeClick("Water") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Grass",
-                        onClick = { onTypeClick("Grass") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Electric",
-                        onClick = { onTypeClick("Electric") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Second column
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TypeButton(
-                        type = "Dragon",
-                        onClick = { onTypeClick("Dragon") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Psychic",
-                        onClick = { onTypeClick("Psychic") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Ghost",
-                        onClick = { onTypeClick("Ghost") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Dark",
-                        onClick = { onTypeClick("Dark") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Third column
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    TypeButton(
-                        type = "Steel",
-                        onClick = { onTypeClick("Steel") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    TypeButton(
-                        type = "Fairy",
-                        onClick = { onTypeClick("Fairy") },
+                    TypeColumn(
+                        types = listOf("Steel", "Fairy"),
+                        onTypeClick = onTypeClick,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -158,44 +127,6 @@ fun HomeScreen(
                     }
                 }
             }
-        } else {
-            Column(
-                modifier = Modifier.padding(top = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TypeRow(
-                    types = listOf("Fire", "Water"),
-                    onTypeClick = onTypeClick
-                )
-
-                TypeRow(
-                    types = listOf("Grass", "Electric"),
-                    onTypeClick = onTypeClick
-                )
-
-                TypeRow(
-                    types = listOf("Dragon", "Psychic"),
-                    onTypeClick = onTypeClick
-                )
-
-                TypeRow(
-                    types = listOf("Ghost", "Dark"),
-                    onTypeClick = onTypeClick
-                )
-
-                TypeRow(
-                    types = listOf("Steel", "Fairy"),
-                    onTypeClick = onTypeClick
-                )
-            }
-        }
-
-        if (!isLandscape && !isInternetAvailable) {
-            OfflineStatus(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 64.dp)
-            )
         }
     }
 }
@@ -232,13 +163,10 @@ private fun OfflineStatus(
 }
 
 @Composable
-fun TypeRow(
+private fun TypeRow(
     types: List<String>,
     onTypeClick: (String) -> Unit
 ) {
-    val columns =
-        if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) 4 else 2
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -246,15 +174,33 @@ fun TypeRow(
         types.forEach { type ->
             TypeButton(
                 type = type,
-                onClick = {
-                    onTypeClick(type)
-                },
+                onClick = { onTypeClick(type) },
                 modifier = Modifier.weight(1f)
             )
         }
 
-        repeat(maxOf(0, columns - types.size)) {
+        repeat(maxOf(0, 2 - types.size)) {
             Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun TypeColumn(
+    types: List<String>,
+    onTypeClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        types.forEach { type ->
+            TypeButton(
+                type = type,
+                onClick = { onTypeClick(type) },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -304,6 +250,7 @@ private fun TypeButton(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
